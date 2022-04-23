@@ -1,0 +1,2110 @@
+---
+title: "Cyclistic - Case Study"
+author: "Ankita Shrivastava"
+date: '2022-04-19'
+output: html_document
+---
+
+**Cyclistic- Case Study**
+
+This case study is a part of Google Data Analytics Professional Certificate.
+
+**Introduction**
+
+About the company In 2016, Cyclistic launched a successful bike-share offering. Since then, the program has grown to a fleet of 5,824 bicycles that are geotracked and locked into a network of 692 stations across Chicago. The bikes can be unlocked from one station and returned to any other station in the system anytime.
+
+Until now, Cyclistic's marketing strategy relied on building general awareness and appealing to broad consumer segments. One approach that helped make these things possible was the flexibility of its pricing plans: single-ride passes, full-day passes, and annual memberships. Customers who purchase single-ride or full-day passes are referred to as casual riders. Customers who purchase annual memberships are Cyclistic members
+
+**Business Goal** Design marketing strategies aimed at converting casual riders into annual members.
+
+**Data source** <https://divvy-tripdata.s3.amazonaws.com/index.html>
+
+Note: Cyclistic is a fictional company. The data has been made available by Motivate International Inc. under this license.) Data-privacy issues prohibits the use of riders' personal identification information. This means that credit card numbers to determine if casual riders live in the Cyclistic service area or if they have purchased multiple single passes are not used for this case-study.
+
+Data files attached below, contains information about the steps used for merging files and cleaning processes used for preparing these files.
+
+\*\* data files\*\*
+
+```{r cyclistic_2022}
+
+options(repos = structure(c(CRAN = "http://cran.project.org")))
+options(repos ="http://cran.r-project.org")
+install.packages("tidyverse", repos ="http://cran.rstudio.com")
+install.packages("readr" , repos ="http://cran.rstudio.com")
+install.packages("plyr" , repos ="http://cran.rstudio.com")
+install.packages("dplyr", repos ="http://cran.rstudio.com")
+install.packages("scales", repos ="http://cran.rstudio.com")
+install.packages("lubridate", repos ="http://cran.rstudio.com")
+
+
+    #load library
+    library(tidyverse)
+    library(readr)
+    library(plyr)
+    library(dplyr)
+    library(scales)
+    library(lubridate)
+
+
+    # change the working directory to file location
+    setwd("C:/Users/ankit/Desktop/Cyclist/2022/xls")
+    list.files()
+
+    # read the csv files directly from file location
+    file_2022 <- list.files("C:/Users/ankit/Desktop/Cyclist/2022/xls", pattern = ".csv")
+    file_2022
+
+    # merge the files
+    cyclist_2022 <- lapply(file_2022, read_csv) %>%
+      bind_rows
+
+    #summary of the merged file
+    summary(cyclist_2022)
+
+
+
+    #1) Analysis- Number of Riders: Member Casual
+    #create table
+    step_1 <- as.data.frame(table(cyclist_2022$member_casual))
+    names(step_1)=c("member_casual","count")
+    step_1
+
+    # plot member_casual 
+    step_2<-ggplot(step_1 ,mapping =  aes(x= member_casual, y= count, fill = member_casual))+
+      geom_bar(stat = "identity") + 
+      geom_text(aes(label = count), vjust = 0)+
+      scale_y_continuous(labels = comma)+
+      labs(title = "Riders: Member and Casual", subtitle = "Year: 2022")
+    step_2
+  
+
+
+    # 2) Analysis -Rideable Types: Member and Casual 
+    #create_table
+    step_1<- as.data.frame(table(cyclist_2022$rideable_type, cyclist_2022$member_casual))
+    names(step_1) = c("rideable_type", "member_casual", "count")
+    step_1
+
+    #plot rideable_type and member_casual
+    step_2 <-ggplot(step_1, mapping = aes(x= rideable_type, y= count, fill = member_casual))+
+      geom_bar(stat = "identity", position = position_dodge())+
+      geom_text(aes(label = count), hjust = 1, vjust = 0)+
+      facet_wrap(~rideable_type)
+    step_2
+
+    # add title to the plot
+    step_3 <-step_2+labs(title = "Ride_types: Member and Casual", subtitle = "Year: 2022")
+    step_3
+
+
+    # 3) Analysis - Monthly Rides: Member and Casual
+    # mutate cyclist_2022
+    data <-cyclist_2022
+    data
+
+    data_1 <- mutate(data, start_date = as.Date(started_at))
+    data_1
+
+    data_2 <-mutate(data_1, start_month_num = as.numeric(format(start_date, '%m')))
+    data_2
+
+    summary(data_2)
+
+    # create table
+    step_1<- as.data.frame(table(data_2$start_month_num, data_2$member_casual))
+    names(step_1) = c("month", "member_casual", "count")
+    step_1
+
+    #plot month and member_casual
+    step_2 <-ggplot(step_1, mapping = aes(x= month, y= count, fill = member_casual))+
+      geom_bar(stat = "identity", position = position_dodge())+
+      geom_text(aes(label = count), hjust = 1, vjust = 0)
+    step_2
+
+    #change the x-axis format
+    step_3 <- step_2 + 
+      scale_x_discrete(labels = c("1" = "Jan", "2" = "Feb"))
+    step_3
+
+    # add title to the graph
+    step_4 <-step_3+labs(title = "Monthly: Members and Casuals", subtitle = "Year: 2022")
+    step_4
+
+    #4. Analysis- Days: Members and Casuals
+    #create table
+    step_1 <- as.data.frame(table(cyclist_2022$day_of_week, cyclist_2022$member_casual))
+    names(step_1) = c("day_of_week", "member_casual", "count")
+    step_1
+
+    #plot day and member_casual
+    step_2 <-ggplot(step_1, mapping = aes(x= day_of_week, y= count, fill = member_casual))+
+      geom_bar(stat = "identity", position = position_dodge())+
+      geom_text(aes(label = count), hjust = 1, vjust = 0)
+    step_2
+
+    #change the x-axis format
+    step_3 <- step_2 + 
+      scale_x_discrete(labels = c("1" = "Sun", "2" = "Mon", "3" = "Tue", "4"= "Wed", "5"= "Thus", "6"="Fri", "7" = "Sat"))
+    step_3
+
+    # add title to the graph
+    step_4 <-step_3+labs(title = "Day: Member and Casual", subtitle = "Year: 2022")
+
+```
+
+```{r Cyclistic_2021}
+install.packages("tidyverse")
+install.packages("readr")
+install.packages("plyr")
+install.packages("dplyr")
+install.packages("scales")
+install.packages("lubridate")
+
+#load library
+library(tidyverse)
+library(readr)
+library(plyr)
+library(dplyr)
+library(scales)
+library(lubridate)
+
+
+# change the working directory to file location
+setwd("C:/Users/ankit/Desktop/Cyclist/2021/xls")
+
+# read the csv files directly from file location
+file_2021 <- list.files("C:/Users/ankit/Desktop/Cyclist/2021/xls", pattern = ".csv")
+file_2021
+
+# merge the files
+v1 <- lapply(file_2021, read_csv) %>%
+  bind_rows
+
+#summary of the merged file
+summary(v1)
+
+
+#remove na
+v1_na <- na.omit(v1)
+
+# assign m1_na to cyclist_2021
+cyclist_2021 <- v1_na
+
+# summary
+summary(cyclist_2021)
+
+#1) Analysis- Number of member and casual riders
+#create table
+step_1 <- as.data.frame(table(cyclist_2021$member_casual))
+names(step_1)=c("member_casual","count")
+step_1
+
+# plot member_casual 
+step_2<-ggplot(step_1 ,mapping =  aes(x= member_casual, y= count, fill = member_casual))+
+  geom_bar(stat = "identity") + 
+  geom_text(aes(label = count), vjust = 0)+
+  scale_y_continuous(labels = comma)+
+  labs(title = "Riders: Member and Casual", subtitle = "Year: 2021")
+step_2
+
+
+# 2) Analysis -Ride types and member casual 
+#create_table
+step_1<- as.data.frame(table(cyclist_2021$rideable_type, cyclist_2021$member_casual))
+names(step_1) = c("rideable_type", "member_casual", "count")
+step_1
+
+#plot rideable_type and member_casual
+step_2 <-ggplot(step_1, mapping = aes(x= rideable_type, y= count, fill = member_casual))+
+  geom_bar(stat = "identity", position = position_dodge())+
+  geom_text(aes(label = count), hjust = 1, vjust = 0)+
+  facet_wrap(~rideable_type)+
+  labs(title = "Ride_types: Member and Casual", subtitle = "Year: 2021")
+step_2
+
+# 3) Analysis - Monthly rides by member_casual
+# mutate cyclist_2021
+data <-cyclist_2021
+data
+
+data_1 <- mutate(data, start_date = as.Date(started_at))
+data_1
+
+data_2 <-mutate(data_1, start_month_num = as.numeric(format(start_date, '%m')))
+data_2
+
+summary(data_2)
+
+# create table
+step_1<- as.data.frame(table(data_2$start_month_num, data_2$member_casual))
+names(step_1) = c("month", "member_casual", "count")
+step_1
+
+#plot month and member_casual
+step_2 <-ggplot(step_1, mapping = aes(x= month, y= count, fill = member_casual))+
+  geom_bar(stat = "identity", position = position_dodge())+
+  geom_text(aes(label = count), hjust = 1, vjust = 0)
+step_2
+
+#change the x-axis format
+step_3 <- step_2 + 
+  scale_x_discrete(labels = c("1" = "Jan", "2" = "Feb", "3" ="Mar", "4"= "April", "5"= "May", "6"= "June", "7"="July", "8"= "Aug", "9"= "Sept", "10"= "Oct", "11"= "Nov", "12"="Dec"))
+step_3
+
+# add title to the graph
+step_4 <-step_3+labs(title = "Monthly: Members and Casuals", subtitle = "Year: 2021")
+step_4
+
+#4. analysis- day and member_casual
+#create table
+step_1 <- as.data.frame(table(cyclist_2021$day_of_week, cyclist_2021$member_casual))
+names(step_1) = c("day_of_week", "member_casual", "count")
+step_1
+
+#plot day and member_casual
+step_2 <-ggplot(step_1, mapping = aes(x= day_of_week, y= count, fill = member_casual))+
+  geom_bar(stat = "identity", position = position_dodge())+
+  geom_text(aes(label = count), hjust = 1, vjust = 0)
+step_2
+
+#change the x-axis format
+step_3 <- step_2 + 
+  scale_x_discrete(labels = c("1" = "Sun", "2" = "Mon", "3" = "Tue", "4"= "Wed", "5"= "Thus", "6"="Fri", "7" = "Sat"))+
+  scale_y_continuous(labels = comma)
+  step_3
+
+# add title to the graph
+step_4 <-step_3+labs(title = "Day: Member and Casual", subtitle = "Year: 2021")
+step_4
+
+
+```
+
+```{r cyclistic_2020}
+
+#install packages
+
+install.packages("tidyverse")
+install.packages("readr")
+install.packages("plyr")
+install.packages("dplyr")
+install.packages("scales")
+install.packages("lubridate")
+
+#load library
+library(tidyverse)
+library(readr)
+library(plyr)
+library(dplyr)
+library(scales)
+library(lubridate)
+
+
+# change the working directory to file location
+setwd("C:/Users/ankit/Desktop/Cyclist/2020/xls/cyclist_2020_mod")
+
+# read the csv files directly from file location
+v1<- list.files("C:/Users/ankit/Desktop/Cyclist/2020/xls/cyclist_2020_mod", pattern = ".csv")
+v1
+
+# merge
+v2 <- lapply(v1, read_csv) %>%
+  bind_rows
+
+# summary
+summary(v2)
+
+#remove na
+v3 <- na.omit(v2)
+summary(v3)
+
+#assign name to df
+cyclist_2020 <- v3
+summary(cyclist_2020)
+
+#1) Analysis- Number of member and casual riders
+#create table
+step_1 <- as.data.frame(table(cyclist_2020$member_casual))
+names(step_1)=c("member_casual","count")
+step_1
+
+# plot member_casual 
+step_2<-ggplot(step_1 ,mapping =  aes(x= member_casual, y= count, fill = member_casual))+
+  geom_bar(stat = "identity") + 
+  geom_text(aes(label = count), vjust = 0)+
+  scale_y_continuous(labels = comma)+
+  labs(title = "Riders: Member and Casual", subtitle = "Year: 2020")
+step_2
+
+
+# 2) Analysis -Ride types and member casual 
+#create_table
+step_1<- as.data.frame(table(cyclist_2020$rideable_type, cyclist_2020$member_casual))
+names(step_1) = c("rideable_type", "member_casual", "count")
+step_1
+
+#plot rideable_type and member_casual
+step_2 <-ggplot(step_1, mapping = aes(x= rideable_type, y= count, fill = member_casual))+
+  geom_bar(stat = "identity", position = position_dodge())+
+  geom_text(aes(label = count), hjust = 1, vjust = 0)+
+  facet_wrap(~rideable_type)
+step_2
+
+# add title to the plot
+step_3 <-step_2+labs(title = "Ride_types: Member and Casual", subtitle = "Year: 2020")
+step_3
+
+# 3) Analysis - Monthly rides by member_casual
+# mutate cyclist_2020
+data <-cyclist_2020
+data
+
+data_1 <- mutate(data, start_date = as.Date(started_at))
+data_1
+
+data_2 <-mutate(data_1, start_month_num = as.numeric(format(start_date, '%m')))
+data_2
+
+summary(data_2)
+
+# create table
+step_1<- as.data.frame(table(data_2$start_month_num, data_2$member_casual))
+names(step_1) = c("month", "member_casual", "count")
+step_1
+
+#plot month and member_casual
+step_2 <-ggplot(step_1, mapping = aes(x= month, y= count, fill = member_casual))+
+  geom_bar(stat = "identity", position = position_dodge())+
+  geom_text(aes(label = count), hjust = 1, vjust = 0)
+step_2
+
+#change the x-axis format
+step_3 <- step_2 + 
+  scale_x_discrete(labels = c("1" = "Jan", "2" = "Feb", "3" ="Mar", "4"= "April", "5"= "May", "6"= "June", "7"="July", "8"= "Aug", "9"= "Sept", "10"= "Oct", "11"= "Nov", "12"="Dec")) +
+  scale_y_continuous(labels = comma)
+step_3
+
+# add title to the graph
+step_4 <-step_3+labs(title = "Monthly: Members and Casuals", subtitle = "Year: 2020")
+step_4
+
+#4. analysis- day and member_casual
+#create table
+step_1 <- as.data.frame(table(cyclist_2020$day_of_week, cyclist_2020$member_casual))
+names(step_1) = c("day_of_week", "member_casual", "count")
+step_1
+
+#plot day and member_casual
+step_2 <-ggplot(step_1, mapping = aes(x= day_of_week, y= count, fill = member_casual))+
+  geom_bar(stat = "identity", position = position_dodge())+
+  geom_text(aes(label = count), hjust = 1, vjust = 0)
+step_2
+
+#change the x-axis format
+step_3 <- step_2 + 
+  scale_x_discrete(labels = c("1" = "Sun", "2" = "Mon", "3" = "Tue", "4"= "Wed", "5"= "Thus", "6"="Fri", "7" = "Sat"))+
+  scale_y_continuous(labels = comma)
+
+step_3
+
+# add title to the graph
+step_4 <-step_3+labs(title = "Day: Member and Casual", subtitle = "Year: 2020")
+step_4
+
+
+```
+
+```{r cyclistic_2019}
+
+#install packages
+install.packages("tidyverse")
+install.packages("readr")
+install.packages("plyr")
+install.packages("dplyr")
+install.packages("scales")
+install.packages("lubridate")
+
+
+#load packages
+library(tidyverse)
+library(readr)
+library(plyr)
+library(dplyr)
+library(scales)
+library(lubridate)
+
+setwd("C:/Users/ankit/Desktop/Cyclist/2019/xls")
+
+#read the files
+read <- list.files("C:/Users/ankit/Desktop/Cyclist/2019/xls", pattern = ".csv")
+read
+
+#merge the fils
+merge <- lapply(read,read_csv) %>%
+  bind_rows
+
+colnames(merge)
+summary(merge)
+
+#drop the col of the dataframe
+merge_v1 <- select(merge, -c(gender, birthyear))
+summary(merge_v1)
+
+#remove NA from the dataframe
+cyclist_2019 <- na.omit(merge_v1)
+summary(cyclist_2019)
+
+#1) Analysis- Number of member and casual riders
+#create table
+step_1 <- as.data.frame(table(cyclist_2019$member_casual))
+names(step_1)=c("member_casual","count")
+step_1
+
+# plot member_casual 
+step_2<-ggplot(step_1 ,mapping =  aes(x= member_casual, y= count, fill = member_casual))+
+  geom_bar(stat = "identity") + 
+  geom_text(aes(label = count), vjust = 0)+
+  scale_y_continuous(labels = comma)+
+  labs(title = "Riders: Member and Casual", subtitle = "Year: 2019")
+step_2
+
+
+# 2) Analysis -Ride types and member casual - Information unavailable
+
+
+# 3) Analysis - Monthly rides by member_casual
+# mutate cyclist_2019
+data <-cyclist_2019
+data
+
+data_1 <- mutate(data, start_date = as.Date(start_time))
+data_1
+
+data_2 <-mutate(data_1, start_month_num = as.numeric(format(start_date, '%m')))
+data_2
+
+summary(data_2)
+
+# create table
+step_1<- as.data.frame(table(data_2$start_month_num, data_2$member_casual))
+names(step_1) = c("month", "member_casual", "count")
+step_1
+
+#plot month and member_casual
+step_2 <-ggplot(step_1, mapping = aes(x= month, y= count, fill = member_casual))+
+  geom_bar(stat = "identity", position = position_dodge())+
+  geom_text(aes(label = count), hjust = 1, vjust = 0)
+step_2
+
+#change the x-axis format
+step_3 <- step_2 + 
+  scale_x_discrete(labels = c("1" = "Jan", "2" = "Feb", "3" ="Mar", "4"= "April", "5"= "May", "6"= "June", "7"="July", "8"= "Aug", "9"= "Sept", "10"= "Oct", "11"= "Nov", "12"="Dec")) +
+  scale_y_continuous(labels = comma)
+step_3
+
+# add title to the graph
+step_4 <-step_3+labs(title = "Monthly: Members and Casuals", subtitle = "Year: 2019")
+step_4
+
+#4. analysis- day and member_casual
+#create table
+step_1 <- as.data.frame(table(cyclist_2019$day_of_week, cyclist_2019$member_casual))
+names(step_1) = c("day_of_week", "member_casual", "count")
+step_1
+
+#plot day and member_casual
+step_2 <-ggplot(step_1, mapping = aes(x= day_of_week, y= count, fill = member_casual))+
+  geom_bar(stat = "identity", position = position_dodge())+
+  geom_text(aes(label = count), hjust = 1, vjust = 0)
+step_2
+
+#change the x-axis format
+step_3 <- step_2 + 
+  scale_x_discrete(labels = c("1" = "Sun", "2" = "Mon", "3" = "Tue", "4"= "Wed", "5"= "Thus", "6"="Fri", "7" = "Sat"))+
+  scale_y_continuous(labels = comma)
+
+step_3
+
+# add title to the graph
+step_4 <-step_3+labs(title = "Day: Member and Casual", subtitle = "Year: 2019")
+step_4
+
+```
+
+```{r cyclistic_2018}
+
+#install packages
+install.packages("tidyverse")
+install.packages("readr")
+install.packages("plyr")
+install.packages("dplyr")
+install.packages("scales")
+install.packages("lubridate")
+
+
+#load packages
+library(tidyverse)
+library(readr)
+library(plyr)
+library(dplyr)
+library(scales)
+library(lubridate)
+
+setwd("C:/Users/ankit/Desktop/Cyclist/2018/xls")
+
+#read the files
+v1 <- list.files("C:/Users/ankit/Desktop/Cyclist/2018/xls", pattern = ".csv")
+v1
+
+#merge the fils
+v2 <- lapply(v1,read_csv) %>%
+  bind_rows
+summary(v2)
+
+
+#remove cols
+v3 <- select(v2,-c(gender, birthyear))
+
+#remove na
+cyclist_2018 <- na.omit(v3)
+summary(cyclist_2018)
+
+
+#1) Analysis- Number of member and casual riders
+#create table
+step_1 <- as.data.frame(table(cyclist_2018$usertype))
+names(step_1)=c("member_casual","count")
+step_1
+
+# plot member_casual 
+step_2<-ggplot(step_1 ,mapping =  aes(x= member_casual, y= count, fill = member_casual))+
+  geom_bar(stat = "identity") + 
+  geom_text(aes(label = count), vjust = 0)+
+  scale_y_continuous(labels = comma)+
+  labs(title = "Riders: Member and Casual", subtitle = "Year: 2018")
+step_2
+
+
+# 2) Analysis -Ride types and member casual - Information unavailable
+
+
+# 3) Analysis - Monthly rides by member_casual
+# mutate cyclist_2018
+data <-cyclist_2018
+data
+
+colnames(data)
+data_1 <- mutate(data, start_date = as.Date(start_time))
+data_1
+
+data_2 <-mutate(data_1, start_month_num = as.numeric(format(start_date, '%m')))
+data_2
+
+summary(data_2)
+
+# create table
+step_1<- as.data.frame(table(data_2$start_month_num, data_2$usertype))
+names(step_1) = c("month", "member_casual", "count")
+step_1
+
+#plot month and member_casual
+step_2 <-ggplot(step_1, mapping = aes(x= month, y= count, fill = member_casual))+
+  geom_bar(stat = "identity", position = position_dodge())+
+  geom_text(aes(label = count), hjust = 1, vjust = 0)
+step_2
+
+#change the x-axis format
+step_3 <- step_2 + 
+  scale_x_discrete(labels = c("1" = "Jan", "2" = "Feb", "3" ="Mar", "4"= "April", "5"= "May", "6"= "June", "7"="July", "8"= "Aug", "9"= "Sept", "10"= "Oct", "11"= "Nov", "12"="Dec")) +
+  scale_y_continuous(labels = comma)
+step_3
+
+# add title to the graph
+step_4 <-step_3+labs(title = "Monthly: Members and Casuals", subtitle = "Year: 2018")
+step_4
+
+#4. analysis- day and member_casual
+#create table
+step_1 <- as.data.frame(table(cyclist_2018$day_of_week, cyclist_2018$usertype))
+names(step_1) = c("day_of_week", "member_casual", "count")
+step_1
+
+#plot day and member_casual
+step_2 <-ggplot(step_1, mapping = aes(x= day_of_week, y= count, fill = member_casual))+
+  geom_bar(stat = "identity", position = position_dodge())+
+  geom_text(aes(label = count), hjust = 1, vjust = 0)
+step_2
+
+#change the x-axis format
+step_3 <- step_2 + 
+  scale_x_discrete(labels = c("1" = "Sun", "2" = "Mon", "3" = "Tue", "4"= "Wed", "5"= "Thus", "6"="Fri", "7" = "Sat"))+
+  scale_y_continuous(labels = comma)
+
+step_3
+
+# add title to the graph
+step_4 <-step_3+labs(title = "Day: Member and Casual", subtitle = "Year: 2018")
+step_4
+
+```
+
+```{r cyclistic_2017}
+
+#install packages
+install.packages("tidyverse")
+install.packages("readr")
+install.packages("plyr")
+install.packages("dplyr")
+install.packages("scales")
+install.packages("lubridate")
+
+#load packages
+library(tidyverse)
+library(readr)
+library(plyr)
+library(dplyr)
+library(scales)
+library(lubridate)
+
+setwd("C:/Users/ankit/Desktop/Cyclist/2017/xls")
+
+#read the files
+v1 <- list.files(path = "C:/Users/ankit/Desktop/Cyclist/2017/xls", pattern = ".csv" )
+v1
+
+#merge files
+v2 <- lapply(v1,read_csv) %>%
+  bind_rows()
+
+#summary 
+summary(v2)
+
+#change col name
+names(v2)[names(v2) == "usertype"] <- "member_casual" 
+
+remove <-subset(v2, member_casual == "Dependent")
+remove
+
+#removing the subset from the dataframe v2
+data_frame_mod <- anti_join(v2,remove)
+data_frame_mod
+
+#remove col gender and birthyear
+cyclist_2017 <- select(data_frame_mod, -c(gender, birthyear))
+summary(cyclist_2017)
+
+#1) Analysis- Number of member and casual riders
+#create table
+step_1 <- as.data.frame(table(cyclist_2017$member_casual))
+names(step_1)=c("member_casual","count")
+step_1
+
+# plot member_casual 
+step_2<-ggplot(step_1 ,mapping =  aes(x= member_casual, y= count, fill = member_casual))+
+  geom_bar(stat = "identity") + 
+  geom_text(aes(label = count), vjust = 0)+
+  scale_y_continuous(labels = comma)+
+  labs(title = "Riders: Member and Casual", subtitle = "Year: 2017")
+step_2
+
+
+# 2) Analysis -Ride types and member casual - Information unavailable
+
+
+# 3) Analysis - Monthly rides by member_casual
+# mutate cyclist_2017
+data <-cyclist_2017
+data
+
+colnames(data)
+
+data_1 <- mutate(data, start_date = as.Date(start_time))
+data_1
+
+data_2 <-mutate(data_1, start_month_num = as.numeric(format(start_date, '%m')))
+data_2
+
+summary(data_2)
+
+# create table
+step_1<- as.data.frame(table(data_2$start_month_num, data_2$member_casual))
+names(step_1) = c("month", "member_casual", "count")
+step_1
+
+#plot month and member_casual
+step_2 <-ggplot(step_1, mapping = aes(x= month, y= count, fill = member_casual))+
+  geom_bar(stat = "identity", position = position_dodge())+
+  geom_text(aes(label = count), hjust = 1, vjust = 0)
+step_2
+
+#change the x-axis format
+step_3 <- step_2 + 
+  scale_x_discrete(labels = c("1" = "Jan", "2" = "Feb", "3" ="Mar", "4"= "April", "5"= "May", "6"= "June", "7"="July", "8"= "Aug", "9"= "Sept", "10"= "Oct", "11"= "Nov", "12"="Dec")) +
+  scale_y_continuous(labels = comma)
+step_3
+
+# add title to the graph
+step_4 <-step_3+labs(title = "Monthly: Members and Casuals", subtitle = "Year: 2017")
+step_4
+
+#4. analysis- day and member_casual
+#create table
+step_1 <- as.data.frame(table(cyclist_2017$day_of_week, cyclist_2017$member_casual))
+names(step_1) = c("day_of_week", "member_casual", "count")
+step_1
+
+#plot day and member_casual
+step_2 <-ggplot(step_1, mapping = aes(x= day_of_week, y= count, fill = member_casual))+
+  geom_bar(stat = "identity", position = position_dodge())+
+  geom_text(aes(label = count), hjust = 1, vjust = 0)
+step_2
+
+#change the x-axis format
+step_3 <- step_2 + 
+  scale_x_discrete(labels = c("1" = "Sun", "2" = "Mon", "3" = "Tue", "4"= "Wed", "5"= "Thus", "6"="Fri", "7" = "Sat"))+
+  scale_y_continuous(labels = comma)
+
+step_3
+
+# add title to the graph
+step_4 <-step_3+labs(title = "Day: Member and Casual", subtitle = "Year: 2017")
+step_4
+
+
+```
+
+```{r cyclistic_2016}
+
+# install packages
+install.packages("tidyverse")
+install.packages("readr")
+install.packages("plyr")
+install.packages("dplyr")
+install.packages("scales")
+install.packages("lubridate")
+
+#load packages
+library(tidyverse)
+library(readr)
+library(plyr)
+library(dplyr)
+library(scales)
+library(lubridate)
+
+# directory 
+setwd("C:/Users/ankit/Desktop/Cyclist/2016/xls")
+
+# read files
+v1 <- list.files( path = "C:/Users/ankit/Desktop/Cyclist/2016/xls", pattern = ".csv")
+v1
+
+#merge files
+v2 <- lapply(v1, read_csv) %>%
+  bind_rows
+
+#summary
+summary(v2)
+
+# remove col
+v3 <- select(v2, -c(starttime, stoptime, gender, birthyear))
+summary(v3)
+
+# rename col
+names(v3)[names(v3) =="usertype"] = "member_casual"
+summary(v3)
+
+remove <-subset(v3, member_casual == "Dependent")
+remove
+
+#removing the subset from the dataframe v2
+data_frame_mod <- anti_join(v3,remove)
+data_frame_mod
+
+# remove na and assign final name
+cyclist_2016 <- na.omit(data_frame_mod)
+summary(cyclist_2016)
+
+#1) Analysis- Number of member and casual riders
+#create table
+step_1 <- as.data.frame(table(cyclist_2016$member_casual))
+names(step_1)=c("member_casual","count")
+step_1
+
+# plot member_casual 
+step_2<-ggplot(step_1 ,mapping =  aes(x= member_casual, y= count, fill = member_casual))+
+  geom_bar(stat = "identity") + 
+  geom_text(aes(label = count), vjust = 0)+
+  scale_y_continuous(labels = comma)+
+  labs(title = "Riders: Member and Casual", subtitle = "Year: 2016")
+step_2
+
+
+# 2) Analysis -Ride types and member casual - Information unavailable
+
+
+# 3) Analysis - Monthly rides by member_casual
+# mutate cyclist_2016
+data <-cyclist_2016
+data
+
+colnames(data)
+
+data_1 <- mutate(data, start_date = as.Date(start_time))
+data_1
+
+data_2 <-mutate(data_1, start_month_num = as.numeric(format(start_date, '%m')))
+data_2
+
+summary(data_2)
+
+# create table
+step_1<- as.data.frame(table(data_2$start_month_num, data_2$member_casual))
+names(step_1) = c("month", "member_casual", "count")
+step_1
+
+#plot month and member_casual
+step_2 <-ggplot(step_1, mapping = aes(x= month, y= count, fill = member_casual))+
+  geom_bar(stat = "identity", position = position_dodge())+
+  geom_text(aes(label = count), hjust = 1, vjust = 0)
+step_2
+
+#change the x-axis format
+step_3 <- step_2 + 
+  scale_x_discrete(labels = c("1" = "Jan", "2" = "Feb", "3" ="Mar", "4"= "April", "5"= "May", "6"= "June", "7"="July", "8"= "Aug", "9"= "Sept", "10"= "Oct", "11"= "Nov", "12"="Dec")) +
+  scale_y_continuous(labels = comma)
+step_3
+
+# add title to the graph
+step_4 <-step_3+labs(title = "Monthly: Members and Casuals", subtitle = "Year: 2016")
+step_4
+
+#4. analysis- day and member_casual
+#create table
+step_1 <- as.data.frame(table(cyclist_2016$day_of_week, cyclist_2016$member_casual))
+names(step_1) = c("day_of_week", "member_casual", "count")
+step_1
+
+#plot day and member_casual
+step_2 <-ggplot(step_1, mapping = aes(x= day_of_week, y= count, fill = member_casual))+
+  geom_bar(stat = "identity", position = position_dodge())+
+  geom_text(aes(label = count), hjust = 1, vjust = 0)
+step_2
+
+#change the x-axis format
+step_3 <- step_2 + 
+  scale_x_discrete(labels = c("1" = "Sun", "2" = "Mon", "3" = "Tue", "4"= "Wed", "5"= "Thus", "6"="Fri", "7" = "Sat"))+
+  scale_y_continuous(labels = comma)
+
+step_3
+
+# add title to the graph
+step_4 <-step_3+labs(title = "Day: Member and Casual", subtitle = "Year: 2016")
+step_4
+
+```
+
+## Analysis
+
+Detail report contains codes and summary report contains graph.
+
+**Riders : Member and Casual**
+
+```{r Detail Report: Members and Casuals}
+
+ install.packages("tidyverse")
+install.packages("readr")
+install.packages("plyr")
+install.packages("dplyr")
+install.packages("scales")
+install.packages("lubridate")
+install.packages("ggplot2")
+install.packages("patchwork")
+
+
+#load library
+library(tidyverse)
+library(readr)
+library(plyr)
+library(dplyr)
+library(scales)
+library(lubridate)
+library(ggplot2)
+library(patchwork)
+
+# Year_2022
+# change the working directory to file location
+setwd("C:/Users/ankit/Desktop/Cyclist/2022/xls")
+list.files()
+
+# read the csv files directly from file location
+file_2022 <- list.files("C:/Users/ankit/Desktop/Cyclist/2022/xls", pattern = ".csv")
+file_2022
+
+# merge the files
+cyclist_2022 <- lapply(file_2022, read_csv) %>%
+  bind_rows
+
+#summary of the merged file
+summary(cyclist_2022)
+
+
+#Year 2022- Number of Riders: Member Casual
+#create table
+table <- as.data.frame(table(cyclist_2022$member_casual))
+names(table)=c("member_casual","count")
+table
+
+# plot member_casual 
+mc_2022<-ggplot(table ,mapping =  aes(x= member_casual, y= count, fill = member_casual))+
+  geom_bar(stat = "identity") + 
+  geom_text(aes(label = count), vjust = 0)+
+  scale_y_continuous(labels = comma)+
+  labs(title = "Year 2022")
+mc_2022
+
+#hide plots
+
+
+
+
+#year_2021
+# change the working directory to file location
+setwd("C:/Users/ankit/Desktop/Cyclist/2021/xls")
+
+# read the csv files directly from file location
+file_2021 <- list.files("C:/Users/ankit/Desktop/Cyclist/2021/xls", pattern = ".csv")
+file_2021
+
+# merge the files
+v1 <- lapply(file_2021, read_csv) %>%
+  bind_rows
+
+#summary of the merged file
+summary(v1)
+
+
+#remove na
+v1_na <- na.omit(v1)
+
+# assign m1_na to cyclist_2021
+cyclist_2021 <- v1_na
+
+# summary
+summary(cyclist_2021)
+
+#Year 2021- Number of member and casual riders
+#create table
+table <- as.data.frame(table(cyclist_2021$member_casual))
+names(table)=c("member_casual","count")
+table
+
+# plot member_casual 
+mc_2021<-ggplot(table ,mapping =  aes(x= member_casual, y= count, fill = member_casual))+
+  geom_bar(stat = "identity") + 
+  geom_text(aes(label = count), vjust = 0)+
+  scale_y_continuous(labels = comma)+
+  labs(title = "Year 2021")
+mc_2021
+
+#Year_2020
+# change the working directory to file location
+setwd("C:/Users/ankit/Desktop/Cyclist/2020/xls/cyclist_2020_mod")
+
+# read the csv files directly from file location
+v1<- list.files("C:/Users/ankit/Desktop/Cyclist/2020/xls/cyclist_2020_mod", pattern = ".csv")
+v1
+
+# merge
+v2 <- lapply(v1, read_csv) %>%
+  bind_rows
+
+# summary
+summary(v2)
+
+#remove na
+v3 <- na.omit(v2)
+summary(v3)
+
+#assign name to df
+cyclist_2020 <- v3
+summary(cyclist_2020)
+
+#1) Analysis- Number of member and casual riders
+#create table
+table <- as.data.frame(table(cyclist_2020$member_casual))
+names(table)=c("member_casual","count")
+table
+
+# plot member_casual 
+mc_2020<-ggplot(table ,mapping =  aes(x= member_casual, y= count, fill = member_casual))+
+  geom_bar(stat = "identity") + 
+  geom_text(aes(label = count), vjust = 0)+
+  scale_y_continuous(labels = comma)+
+  labs(title = "Year 2020")
+mc_2020
+
+
+#year_2019
+setwd("C:/Users/ankit/Desktop/Cyclist/2019/xls")
+
+#read the files
+read <- list.files("C:/Users/ankit/Desktop/Cyclist/2019/xls", pattern = ".csv")
+read
+
+#merge the fils
+merge <- lapply(read,read_csv) %>%
+  bind_rows
+
+colnames(merge)
+summary(merge)
+
+#drop the col of the dataframe
+merge_v1 <- select(merge, -c(gender, birthyear))
+summary(merge_v1)
+
+#remove NA from the dataframe
+cyclist_2019 <- na.omit(merge_v1)
+summary(cyclist_2019)
+
+#1) Analysis- Number of member and casual riders
+#create table
+table<- as.data.frame(table(cyclist_2019$member_casual))
+names(table)=c("member_casual","count")
+table
+
+# plot member_casual 
+mc_2019<-ggplot(table ,mapping =  aes(x= member_casual, y= count, fill = member_casual))+
+  geom_bar(stat = "identity") + 
+  geom_text(aes(label = count), vjust = 0)+
+  scale_y_continuous(labels = comma)+
+  labs(title = "Year 2019")
+mc_2019
+
+#year_2018
+setwd("C:/Users/ankit/Desktop/Cyclist/2018/xls")
+
+#read the files
+v1 <- list.files("C:/Users/ankit/Desktop/Cyclist/2018/xls", pattern = ".csv")
+v1
+
+#merge the fils
+v2 <- lapply(v1,read_csv) %>%
+  bind_rows
+summary(v2)
+
+
+#remove cols
+v3 <- select(v2,-c(gender, birthyear))
+
+#remove na
+cyclist_2018 <- na.omit(v3)
+summary(cyclist_2018)
+
+
+#1) Analysis- Number of member and casual riders
+#create table
+table <- as.data.frame(table(cyclist_2018$usertype))
+names(table)=c("member_casual","count")
+table
+
+# plot member_casual 
+mc_2018<-ggplot(table ,mapping =  aes(x= member_casual, y= count, fill = member_casual))+
+  geom_bar(stat = "identity") + 
+  geom_text(aes(label = count), vjust = 0)+
+  scale_y_continuous(labels = comma)+
+  labs(title =  "Year 2018")
+mc_2018
+
+#year_2017
+setwd("C:/Users/ankit/Desktop/Cyclist/2017/xls")
+
+#read the files
+v1 <- list.files(path = "C:/Users/ankit/Desktop/Cyclist/2017/xls", pattern = ".csv" )
+v1
+
+#merge files
+v2 <- lapply(v1,read_csv) %>%
+  bind_rows()
+
+#summary 
+summary(v2)
+
+#change col name
+names(v2)[names(v2) == "usertype"] <- "member_casual" 
+
+remove <-subset(v2, member_casual == "Dependent")
+remove
+
+#removing the subset from the dataframe v2
+data_frame_mod <- anti_join(v2,remove)
+data_frame_mod
+
+#remove col gender and birthyear
+cyclist_2017 <- select(data_frame_mod, -c(gender, birthyear))
+summary(cyclist_2017)
+
+#1) Analysis- Number of member and casual riders
+#create table
+table <- as.data.frame(table(cyclist_2017$member_casual))
+names(table)=c("member_casual","count")
+table
+
+# plot member_casual 
+mc_2017<-ggplot(table ,mapping =  aes(x= member_casual, y= count, fill = member_casual))+
+  geom_bar(stat = "identity") + 
+  geom_text(aes(label = count), vjust = 0)+
+  scale_y_continuous(labels = comma)+
+  labs(title = "Year 2017")
+mc_2017
+
+#year_2016
+# directory 
+setwd("C:/Users/ankit/Desktop/Cyclist/2016/xls")
+
+# read files
+v1 <- list.files( path = "C:/Users/ankit/Desktop/Cyclist/2016/xls", pattern = ".csv")
+v1
+
+#merge files
+v2 <- lapply(v1, read_csv) %>%
+  bind_rows
+
+#summary
+summary(v2)
+
+# remove col
+v3 <- select(v2, -c(starttime, stoptime, gender, birthyear))
+summary(v3)
+
+# rename col
+names(v3)[names(v3) =="usertype"] = "member_casual"
+summary(v3)
+
+remove <-subset(v3, member_casual == "Dependent")
+remove
+
+#removing the subset from the dataframe v2
+data_frame_mod <- anti_join(v3,remove)
+data_frame_mod
+
+# remove na and assign final name
+cyclist_2016 <- na.omit(data_frame_mod)
+summary(cyclist_2016)
+
+#1) Analysis- Number of member and casual riders
+#create table
+table <- as.data.frame(table(cyclist_2016$member_casual))
+names(table)=c("member_casual","count")
+table
+
+# plot member_casual 
+mc_2016<-ggplot(table ,mapping =  aes(x= member_casual, y= count, fill = member_casual))+
+  geom_bar(stat = "identity") + 
+  geom_text(aes(label = count), vjust = 0)+
+  scale_y_continuous(labels = comma)+
+  labs(title = "Year 2016")
+mc_2016
+```
+
+```{r Summary Reort: Members and Casuals}
+#summary chart
+mc_2022+mc_2021+mc_2020+mc_2019+mc_2018+mc_2017+mc_2016
+
+```
+
+**Ride Types: Member and Casual**
+
+```{r Detail Report: Ride Type}
+
+install.packages("tidyverse")
+install.packages("readr")
+install.packages("plyr")
+install.packages("dplyr")
+install.packages("scales")
+install.packages("lubridate")
+install.packages("ggplot2")
+install.packages("patchwork")
+
+
+#load library
+library(tidyverse)
+library(readr)
+library(plyr)
+library(dplyr)
+library(scales)
+library(lubridate)
+library(ggplot2)
+library(patchwork)
+
+#Year_2022
+# change the working directory to file location
+setwd("C:/Users/ankit/Desktop/Cyclist/2022/xls")
+list.files()
+
+# read the csv files directly from file location
+file_2022 <- list.files("C:/Users/ankit/Desktop/Cyclist/2022/xls", pattern = ".csv")
+file_2022
+
+# merge the files
+cyclist_2022 <- lapply(file_2022, read_csv) %>%
+  bind_rows
+
+#summary of the merged file
+summary(cyclist_2022)
+
+
+
+# Analysis -Rideable Types: Member and Casual 
+#create_table
+table<- as.data.frame(table(cyclist_2022$rideable_type, cyclist_2022$member_casual))
+names(table) = c("rideable_type", "member_casual", "count")
+table
+
+#plot rideable_type and member_casual
+rt_2022 <-ggplot(table, mapping = aes(x= rideable_type, y= count, fill = member_casual))+
+  geom_bar(stat = "identity", position = position_dodge())+
+  labs(title = "Year 2022")
+rt_2022
+
+
+#year_2021
+# change the working directory to file location
+setwd("C:/Users/ankit/Desktop/Cyclist/2021/xls")
+
+# read the csv files directly from file location
+file_2021 <- list.files("C:/Users/ankit/Desktop/Cyclist/2021/xls", pattern = ".csv")
+file_2021
+
+# merge the files
+v1 <- lapply(file_2021, read_csv) %>%
+  bind_rows
+
+#summary of the merged file
+summary(v1)
+
+
+#remove na
+v1_na <- na.omit(v1)
+
+# assign m1_na to cyclist_2021
+cyclist_2021 <- v1_na
+
+# summary
+summary(cyclist_2021)
+
+# 2) Analysis -Ride types and member casual 
+#create_table
+table<- as.data.frame(table(cyclist_2021$rideable_type, cyclist_2021$member_casual))
+names(table) = c("rideable_type", "member_casual", "count")
+table
+
+#plot rideable_type and member_casual
+rt_2021 <-ggplot(table, mapping = aes(x= rideable_type, y= count, fill = member_casual))+
+  geom_bar(stat = "identity", position = position_dodge())+
+  labs(title = "Year 2021")
+rt_2021
+
+
+#year_2020
+# change the working directory to file location
+setwd("C:/Users/ankit/Desktop/Cyclist/2020/xls/cyclist_2020_mod")
+
+# read the csv files directly from file location
+v1<- list.files("C:/Users/ankit/Desktop/Cyclist/2020/xls/cyclist_2020_mod", pattern = ".csv")
+v1
+
+# merge
+v2 <- lapply(v1, read_csv) %>%
+  bind_rows
+
+# summary
+summary(v2)
+
+#remove na
+v3 <- na.omit(v2)
+summary(v3)
+
+#assign name to df
+cyclist_2020 <- v3
+summary(cyclist_2020)
+
+# 2) Analysis -Ride types and member casual 
+#create_table
+table<- as.data.frame(table(cyclist_2020$rideable_type, cyclist_2020$member_casual))
+names(table) = c("rideable_type", "member_casual", "count")
+table
+
+#plot rideable_type and member_casual
+rt_2020 <-ggplot(table, mapping = aes(x= rideable_type, y= count, fill = member_casual))+
+  geom_bar(stat = "identity", position = position_dodge())+
+  labs(title = "Year: 2020")
+rt_2020
+
+
+```
+
+```{r Summary Report : Ride Type}
+#summary chart
+rt_2022+rt_2021+rt_2020
+```
+
+**Monthly Rides : Member and Casual**
+```{r Detail Report: Monthly Rides}
+install.packages("tidyverse")
+install.packages("readr")
+install.packages("plyr")
+install.packages("dplyr")
+install.packages("scales")
+install.packages("lubridate")
+install.packages("ggplot2")
+install.packages("patchwork")
+
+
+#load library
+library(tidyverse)
+library(readr)
+library(plyr)
+library(dplyr)
+library(scales)
+library(lubridate)
+library(ggplot2)
+library(patchwork)
+
+
+#year 2022
+# change the working directory to file location
+setwd("C:/Users/ankit/Desktop/Cyclist/2022/xls")
+list.files()
+
+# read the csv files directly from file location
+file_2022 <- list.files("C:/Users/ankit/Desktop/Cyclist/2022/xls", pattern = ".csv")
+file_2022
+
+# merge the files
+cyclist_2022 <- lapply(file_2022, read_csv) %>%
+  bind_rows
+
+#summary of the merged file
+summary(cyclist_2022)
+
+
+
+# Analysis - Monthly Rides: Member and Casual
+# mutate cyclist_2022
+data <-cyclist_2022
+data
+
+data_1 <- mutate(data, start_date = as.Date(started_at))
+data_1
+
+data_2 <-mutate(data_1, start_month_num = as.numeric(format(start_date, '%m')))
+data_2
+
+summary(data_2)
+
+# create table
+table<- as.data.frame(table(data_2$start_month_num, data_2$member_casual))
+names(table) = c("month", "member_casual", "count")
+table
+
+#plot month and member_casual
+mr_2022 <-ggplot(table, mapping = aes(x= month, y= count, fill = member_casual))+
+  geom_bar(stat = "identity", position = position_dodge())+
+  scale_x_discrete(labels = c("1" = "Jan", "2" = "Feb"))+
+  labs(title = "Year 2022")
+mr_2022
+
+#year 2021
+# change the working directory to file location
+setwd("C:/Users/ankit/Desktop/Cyclist/2021/xls")
+
+# read the csv files directly from file location
+file_2021 <- list.files("C:/Users/ankit/Desktop/Cyclist/2021/xls", pattern = ".csv")
+file_2021
+
+# merge the files
+v1 <- lapply(file_2021, read_csv) %>%
+  bind_rows
+
+#summary of the merged file
+summary(v1)
+
+
+#remove na
+v1_na <- na.omit(v1)
+
+# assign m1_na to cyclist_2021
+cyclist_2021 <- v1_na
+
+# summary
+summary(cyclist_2021)
+
+
+# 3) Analysis - Monthly rides by member_casual
+# mutate cyclist_2021
+data <-cyclist_2021
+data
+
+data_1 <- mutate(data, start_date = as.Date(started_at))
+data_1
+
+data_2 <-mutate(data_1, start_month_num = as.numeric(format(start_date, '%m')))
+data_2
+
+summary(data_2)
+
+# create table
+table<- as.data.frame(table(data_2$start_month_num, data_2$member_casual))
+names(table) = c("month", "member_casual", "count")
+table
+
+#plot month and member_casual
+mr_2021<-ggplot(table, mapping = aes(x= month, y= count, fill = member_casual))+
+  geom_bar(stat = "identity", position = position_dodge())+
+  scale_x_discrete(labels = c("1" = "Jan", "2" = "Feb", "3" ="Mar", "4"= "April", "5"= "May", "6"= "June", "7"="July", "8"= "Aug", "9"= "Sept", "10"= "Oct", "11"= "Nov", "12"="Dec"))+
+  scale_y_continuous(labels = comma)+
+  labs(title = "Year 2021")
+mr_2021
+
+#year_2020
+# change the working directory to file location
+setwd("C:/Users/ankit/Desktop/Cyclist/2020/xls/cyclist_2020_mod")
+
+# read the csv files directly from file location
+v1<- list.files("C:/Users/ankit/Desktop/Cyclist/2020/xls/cyclist_2020_mod", pattern = ".csv")
+v1
+
+# merge
+v2 <- lapply(v1, read_csv) %>%
+  bind_rows
+
+# summary
+summary(v2)
+
+#remove na
+v3 <- na.omit(v2)
+summary(v3)
+
+#assign name to df
+cyclist_2020 <- v3
+summary(cyclist_2020)
+
+
+# 3) Analysis - Monthly rides by member_casual
+# mutate cyclist_2020
+data <-cyclist_2020
+data
+
+data_1 <- mutate(data, start_date = as.Date(started_at))
+data_1
+
+data_2 <-mutate(data_1, start_month_num = as.numeric(format(start_date, '%m')))
+data_2
+
+summary(data_2)
+
+# create table
+table<- as.data.frame(table(data_2$start_month_num, data_2$member_casual))
+names(table) = c("month", "member_casual", "count")
+table
+
+#plot month and member_casual
+mr_2020 <-ggplot(table, mapping = aes(x= month, y= count, fill = member_casual))+
+  geom_bar(stat = "identity", position = position_dodge())+
+  scale_x_discrete(labels = c("1" = "Jan", "2" = "Feb", "3" ="Mar", "4"= "April", "5"= "May", "6"= "June", "7"="July", "8"= "Aug", "9"= "Sept", "10"= "Oct", "11"= "Nov", "12"="Dec")) +
+  scale_y_continuous(labels = comma)+
+  labs(title = "Year 2020")
+mr_2020
+
+#year 2019
+setwd("C:/Users/ankit/Desktop/Cyclist/2019/xls")
+
+#read the files
+read <- list.files("C:/Users/ankit/Desktop/Cyclist/2019/xls", pattern = ".csv")
+read
+
+#merge the fils
+merge <- lapply(read,read_csv) %>%
+  bind_rows
+
+colnames(merge)
+summary(merge)
+
+#drop the col of the dataframe
+merge_v1 <- select(merge, -c(gender, birthyear))
+summary(merge_v1)
+
+#remove NA from the dataframe
+cyclist_2019 <- na.omit(merge_v1)
+summary(cyclist_2019)
+
+
+
+# 3) Analysis - Monthly rides by member_casual
+# mutate cyclist_2019
+data <-cyclist_2019
+data
+
+data_1 <- mutate(data, start_date = as.Date(start_time))
+data_1
+
+data_2 <-mutate(data_1, start_month_num = as.numeric(format(start_date, '%m')))
+data_2
+
+summary(data_2)
+
+# create table
+table<- as.data.frame(table(data_2$start_month_num, data_2$member_casual))
+names(table) = c("month", "member_casual", "count")
+table
+
+#plot month and member_casual
+mr_2019 <-ggplot(table, mapping = aes(x= month, y= count, fill = member_casual))+
+  geom_bar(stat = "identity", position = position_dodge())+
+  scale_x_discrete(labels = c("1" = "Jan", "2" = "Feb", "3" ="Mar", "4"= "April", "5"= "May", "6"= "June", "7"="July", "8"= "Aug", "9"= "Sept", "10"= "Oct", "11"= "Nov", "12"="Dec")) +
+  scale_y_continuous(labels = comma) +
+  labs(title = "Year 2019")
+mr_2019
+
+#year 2018
+setwd("C:/Users/ankit/Desktop/Cyclist/2018/xls")
+
+#read the files
+v1 <- list.files("C:/Users/ankit/Desktop/Cyclist/2018/xls", pattern = ".csv")
+v1
+
+#merge the fils
+v2 <- lapply(v1,read_csv) %>%
+  bind_rows
+summary(v2)
+
+
+#remove cols
+v3 <- select(v2,-c(gender, birthyear))
+
+#remove na
+cyclist_2018 <- na.omit(v3)
+summary(cyclist_2018)
+
+
+# 3) Analysis - Monthly rides by member_casual
+# mutate cyclist_2018
+data <-cyclist_2018
+data
+
+colnames(data)
+data_1 <- mutate(data, start_date = as.Date(start_time))
+data_1
+
+data_2 <-mutate(data_1, start_month_num = as.numeric(format(start_date, '%m')))
+data_2
+
+summary(data_2)
+
+# create table
+table<- as.data.frame(table(data_2$start_month_num, data_2$usertype))
+names(table) = c("month", "member_casual", "count")
+table
+
+#plot month and member_casual
+mr_2018 <-ggplot(table, mapping = aes(x= month, y= count, fill = member_casual))+
+  geom_bar(stat = "identity", position = position_dodge())+
+  scale_x_discrete(labels = c("1" = "Jan", "2" = "Feb", "3" ="Mar", "4"= "April", "5"= "May", "6"= "June", "7"="July", "8"= "Aug", "9"= "Sept", "10"= "Oct", "11"= "Nov", "12"="Dec")) +
+  scale_y_continuous(labels = comma)+
+  labs(title ="Year 2018")
+mr_2018
+
+
+#year_2017
+setwd("C:/Users/ankit/Desktop/Cyclist/2017/xls")
+
+#read the files
+v1 <- list.files(path = "C:/Users/ankit/Desktop/Cyclist/2017/xls", pattern = ".csv" )
+v1
+
+#merge files
+v2 <- lapply(v1,read_csv) %>%
+  bind_rows()
+
+#summary 
+summary(v2)
+
+#change col name
+names(v2)[names(v2) == "usertype"] <- "member_casual" 
+
+remove <-subset(v2, member_casual == "Dependent")
+remove
+
+#removing the subset from the dataframe v2
+data_frame_mod <- anti_join(v2,remove)
+data_frame_mod
+
+#remove col gender and birthyear
+cyclist_2017 <- select(data_frame_mod, -c(gender, birthyear))
+summary(cyclist_2017)
+
+
+# 3) Analysis - Monthly rides by member_casual
+# mutate cyclist_2017
+data <-cyclist_2017
+data
+
+colnames(data)
+
+data_1 <- mutate(data, start_date = as.Date(start_time))
+data_1
+
+data_2 <-mutate(data_1, start_month_num = as.numeric(format(start_date, '%m')))
+data_2
+
+summary(data_2)
+
+# create table
+table<- as.data.frame(table(data_2$start_month_num, data_2$member_casual))
+names(table) = c("month", "member_casual", "count")
+table
+
+#plot month and member_casual
+mr_2017 <-ggplot(table, mapping = aes(x= month, y= count, fill = member_casual))+
+  geom_bar(stat = "identity", position = position_dodge())+
+  scale_x_discrete(labels = c("1" = "Jan", "2" = "Feb", "3" ="Mar", "4"= "April", "5"= "May", "6"= "June", "7"="July", "8"= "Aug", "9"= "Sept", "10"= "Oct", "11"= "Nov", "12"="Dec")) +
+  scale_y_continuous(labels = comma)+
+  labs(title = "Year 2017")
+mr_2017
+
+#year 2016
+# directory 
+setwd("C:/Users/ankit/Desktop/Cyclist/2016/xls")
+
+# read files
+v1 <- list.files( path = "C:/Users/ankit/Desktop/Cyclist/2016/xls", pattern = ".csv")
+v1
+
+#merge files
+v2 <- lapply(v1, read_csv) %>%
+  bind_rows
+
+#summary
+summary(v2)
+
+# remove col
+v3 <- select(v2, -c(starttime, stoptime, gender, birthyear))
+summary(v3)
+
+# rename col
+names(v3)[names(v3) =="usertype"] = "member_casual"
+summary(v3)
+
+remove <-subset(v3, member_casual == "Dependent")
+remove
+
+#removing the subset from the dataframe v2
+data_frame_mod <- anti_join(v3,remove)
+data_frame_mod
+
+# remove na and assign final name
+cyclist_2016 <- na.omit(data_frame_mod)
+summary(cyclist_2016)
+
+
+# 3) Analysis - Monthly rides by member_casual
+# mutate cyclist_2016
+data <-cyclist_2016
+data
+
+colnames(data)
+
+data_1 <- mutate(data, start_date = as.Date(start_time))
+data_1
+
+data_2 <-mutate(data_1, start_month_num = as.numeric(format(start_date, '%m')))
+data_2
+
+summary(data_2)
+
+# create table
+table<- as.data.frame(table(data_2$start_month_num, data_2$member_casual))
+names(table) = c("month", "member_casual", "count")
+table
+
+#plot month and member_casual
+mr_2016 <-ggplot(table, mapping = aes(x= month, y= count, fill = member_casual))+
+  geom_bar(stat = "identity", position = position_dodge())+
+  scale_x_discrete(labels = c("1" = "Jan", "2" = "Feb", "3" ="Mar", "4"= "April", "5"= "May", "6"= "June", "7"="July", "8"= "Aug", "9"= "Sept", "10"= "Oct", "11"= "Nov", "12"="Dec")) +
+  scale_y_continuous(labels = comma)+
+  labs(title = "Year: 2016")
+mr_2016
+
+```
+
+```{r Summary Report : Monthly Rides}
+#summary chart
+
+mr_2022+mr_2021+mr_2020+mr_2019+mr_2018+mr_2017+mr_2016
+
+```
+
+**Weekly Rides: Member and Casual**
+
+```{r Detail Report : Weekly Rides}
+
+install.packages("tidyverse")
+install.packages("readr")
+install.packages("plyr")
+install.packages("dplyr")
+install.packages("scales")
+install.packages("lubridate")
+install.packages("ggplot2")
+install.packages("patchwork")
+
+
+#load library
+library(tidyverse)
+library(readr)
+library(plyr)
+library(dplyr)
+library(scales)
+library(lubridate)
+library(ggplot2)
+library(patchwork)
+
+
+#year 2022
+# change the working directory to file location
+setwd("C:/Users/ankit/Desktop/Cyclist/2022/xls")
+list.files()
+
+# read the csv files directly from file location
+file_2022 <- list.files("C:/Users/ankit/Desktop/Cyclist/2022/xls", pattern = ".csv")
+file_2022
+
+# merge the files
+cyclist_2022 <- lapply(file_2022, read_csv) %>%
+  bind_rows
+
+#summary of the merged file
+summary(cyclist_2022)
+
+#4. Analysis- Days: Members and Casuals
+#create table
+table <- as.data.frame(table(cyclist_2022$day_of_week, cyclist_2022$member_casual))
+names(table) = c("day_of_week", "member_casual", "count")
+table
+
+#plot day and member_casual
+wr_2022 <-ggplot(table, mapping = aes(x= day_of_week, y= count, fill = member_casual))+
+  geom_bar(stat = "identity", position = position_dodge())+
+  scale_x_discrete(labels = c("1" = "Sun", "2" = "Mon", "3" = "Tue", "4"= "Wed", "5"= "Thus", "6"="Fri", "7" = "Sat"))+
+  labs(title = "Year: 2022")
+wr_2022
+
+
+#year_2021
+# change the working directory to file location
+setwd("C:/Users/ankit/Desktop/Cyclist/2021/xls")
+
+# read the csv files directly from file location
+file_2021 <- list.files("C:/Users/ankit/Desktop/Cyclist/2021/xls", pattern = ".csv")
+file_2021
+
+# merge the files
+v1 <- lapply(file_2021, read_csv) %>%
+  bind_rows
+
+#summary of the merged file
+summary(v1)
+
+
+#remove na
+v1_na <- na.omit(v1)
+
+# assign m1_na to cyclist_2021
+cyclist_2021 <- v1_na
+
+# summary
+summary(cyclist_2021)
+
+
+
+#4. analysis- day and member_casual
+#create table
+table <- as.data.frame(table(cyclist_2021$day_of_week, cyclist_2021$member_casual))
+names(table) = c("day_of_week", "member_casual", "count")
+table
+
+#plot day and member_casual
+wr_2021<-ggplot(table, mapping = aes(x= day_of_week, y= count, fill = member_casual))+
+  geom_bar(stat = "identity", position = position_dodge())+
+  scale_x_discrete(labels = c("1" = "Sun", "2" = "Mon", "3" = "Tue", "4"= "Wed", "5"= "Thus", "6"="Fri", "7" = "Sat"))+
+  scale_y_continuous(labels = comma)+
+  labs(title = "Year 2021")
+wr_2021
+
+
+#year_2020
+# change the working directory to file location
+setwd("C:/Users/ankit/Desktop/Cyclist/2020/xls/cyclist_2020_mod")
+
+# read the csv files directly from file location
+v1<- list.files("C:/Users/ankit/Desktop/Cyclist/2020/xls/cyclist_2020_mod", pattern = ".csv")
+v1
+
+# merge
+v2 <- lapply(v1, read_csv) %>%
+  bind_rows
+
+# summary
+summary(v2)
+
+#remove na
+v3 <- na.omit(v2)
+summary(v3)
+
+#assign name to df
+cyclist_2020 <- v3
+summary(cyclist_2020)
+
+
+
+#4. analysis- day and member_casual
+#create table
+table <- as.data.frame(table(cyclist_2020$day_of_week, cyclist_2020$member_casual))
+names(table) = c("day_of_week", "member_casual", "count")
+table
+
+#plot day and member_casual
+wr_2020 <-ggplot(table, mapping = aes(x= day_of_week, y= count, fill = member_casual))+
+  geom_bar(stat = "identity", position = position_dodge())+
+  scale_x_discrete(labels = c("1" = "Sun", "2" = "Mon", "3" = "Tue", "4"= "Wed", "5"= "Thus", "6"="Fri", "7" = "Sat"))+
+  scale_y_continuous(labels = comma)+
+  labs(title  = "Year 2020")
+wr_2020
+
+
+
+#year 2019
+setwd("C:/Users/ankit/Desktop/Cyclist/2019/xls")
+
+#read the files
+read <- list.files("C:/Users/ankit/Desktop/Cyclist/2019/xls", pattern = ".csv")
+read
+
+#merge the fils
+merge <- lapply(read,read_csv) %>%
+  bind_rows
+
+colnames(merge)
+summary(merge)
+
+#drop the col of the dataframe
+merge_v1 <- select(merge, -c(gender, birthyear))
+summary(merge_v1)
+
+#remove NA from the dataframe
+cyclist_2019 <- na.omit(merge_v1)
+summary(cyclist_2019)
+
+
+#4. analysis- day and member_casual
+#create table
+table<- as.data.frame(table(cyclist_2019$day_of_week, cyclist_2019$member_casual))
+names(table) = c("day_of_week", "member_casual", "count")
+table
+
+#plot day and member_casual
+wr_2019 <-ggplot(table, mapping = aes(x= day_of_week, y= count, fill = member_casual))+
+  geom_bar(stat = "identity", position = position_dodge())+
+  scale_x_discrete(labels = c("1" = "Sun", "2" = "Mon", "3" = "Tue", "4"= "Wed", "5"= "Thus", "6"="Fri", "7" = "Sat"))+
+  scale_y_continuous(labels = comma)+
+  labs(title  = "Year 2019")
+wr_2019
+
+
+#year 2018
+setwd("C:/Users/ankit/Desktop/Cyclist/2018/xls")
+
+#read the files
+v1 <- list.files("C:/Users/ankit/Desktop/Cyclist/2018/xls", pattern = ".csv")
+v1
+
+#merge the fils
+v2 <- lapply(v1,read_csv) %>%
+  bind_rows
+summary(v2)
+
+
+#remove cols
+v3 <- select(v2,-c(gender, birthyear))
+
+#remove na
+cyclist_2018 <- na.omit(v3)
+summary(cyclist_2018)
+
+
+
+
+#4. analysis- day and member_casual
+#create table
+table <- as.data.frame(table(cyclist_2018$day_of_week, cyclist_2018$usertype))
+names(table) = c("day_of_week", "member_casual", "count")
+table
+
+#plot day and member_casual
+wr_2018 <-ggplot(table, mapping = aes(x= day_of_week, y= count, fill = member_casual))+
+  geom_bar(stat = "identity", position = position_dodge())+
+  scale_x_discrete(labels = c("1" = "Sun", "2" = "Mon", "3" = "Tue", "4"= "Wed", "5"= "Thus", "6"="Fri", "7" = "Sat"))+
+  scale_y_continuous(labels = comma)+
+  labs(title  = "Year 2018")
+wr_2018
+
+
+
+#year_2017
+setwd("C:/Users/ankit/Desktop/Cyclist/2017/xls")
+
+#read the files
+v1 <- list.files(path = "C:/Users/ankit/Desktop/Cyclist/2017/xls", pattern = ".csv" )
+v1
+
+#merge files
+v2 <- lapply(v1,read_csv) %>%
+  bind_rows()
+
+#summary 
+summary(v2)
+
+#change col name
+names(v2)[names(v2) == "usertype"] <- "member_casual" 
+
+remove <-subset(v2, member_casual == "Dependent")
+remove
+
+#removing the subset from the dataframe v2
+data_frame_mod <- anti_join(v2,remove)
+data_frame_mod
+
+#remove col gender and birthyear
+cyclist_2017 <- select(data_frame_mod, -c(gender, birthyear))
+summary(cyclist_2017)
+
+
+
+#4. analysis- day and member_casual
+#create table
+table <- as.data.frame(table(cyclist_2017$day_of_week, cyclist_2017$member_casual))
+names(table) = c("day_of_week", "member_casual", "count")
+table
+
+#plot day and member_casual
+wr_2017 <-ggplot(table, mapping = aes(x= day_of_week, y= count, fill = member_casual))+
+  geom_bar(stat = "identity", position = position_dodge())+
+  scale_x_discrete(labels = c("1" = "Sun", "2" = "Mon", "3" = "Tue", "4"= "Wed", "5"= "Thus", "6"="Fri", "7" = "Sat"))+
+  scale_y_continuous(labels = comma)+
+  labs(title  = "Year 2017")
+wr_2017
+
+#year 2016
+# directory 
+setwd("C:/Users/ankit/Desktop/Cyclist/2016/xls")
+
+# read files
+v1 <- list.files( path = "C:/Users/ankit/Desktop/Cyclist/2016/xls", pattern = ".csv")
+v1
+
+#merge files
+v2 <- lapply(v1, read_csv) %>%
+  bind_rows
+
+#summary
+summary(v2)
+
+# remove col
+v3 <- select(v2, -c(starttime, stoptime, gender, birthyear))
+summary(v3)
+
+# rename col
+names(v3)[names(v3) =="usertype"] = "member_casual"
+summary(v3)
+
+remove <-subset(v3, member_casual == "Dependent")
+remove
+
+#removing the subset from the dataframe v2
+data_frame_mod <- anti_join(v3,remove)
+data_frame_mod
+
+# remove na and assign final name
+cyclist_2016 <- na.omit(data_frame_mod)
+summary(cyclist_2016)
+
+
+
+#4. analysis- day and member_casual
+#create table
+table<- as.data.frame(table(cyclist_2016$day_of_week, cyclist_2016$member_casual))
+names(table) = c("day_of_week", "member_casual", "count")
+table
+
+#plot day and member_casual
+wr_2016 <-ggplot(table, mapping = aes(x= day_of_week, y= count, fill = member_casual))+
+  geom_bar(stat = "identity", position = position_dodge())+
+  scale_x_discrete(labels = c("1" = "Sun", "2" = "Mon", "3" = "Tue", "4"= "Wed", "5"= "Thus", "6"="Fri", "7" = "Sat"))+
+  scale_y_continuous(labels = comma)+
+  labs(title  = "Year 2016")
+wr_2016
+
+
+```
+
+```{r Summary Report : Weekly Rides}
+#summary chart
+
+wr_2022+wr_2021+wr_2020+wr_2019+wr_2018+wr_2017+wr_2016
+
+```
+
+**Summary of Analysis**
+
+**Members and Casual Riders** 
+Member riders -Highest member riders are  recorded in year 2017, which later dropped year over year and bounced back again in year 2021. The percentage difference in Member riders between year 2017 and year 2021 is .7% , member riders are slightly down.
+
+Casual riders -A continuous growth is observed in Casual riders, during year 2019 till year 2021. The percentage difference in Casual riders between year 2019 and year 2021 is 98%, casual riders have increased significantly, over time. 
+
+**Ride types** 
+Member riders-  The percentage difference in the demand for classic bikes during year 2020 and year 2021 increased by 188%, demand for docked bikes decreased by 200% and demand for electric bikes increased by 90%.
+
+Casual riders-  The percentage difference in the demand for classic bikes during year 2020 and year 2021 increased by 196%, demand for docked bikes decreased by 114% and demand for electric bikes increased by 105%.
+
+**Monthly Riders**
+Member riders - The use of bikes are observed throughout the year. However, the demand increases around April, reaches peak around July- August and then starts dropping. 
+
+Casual riders - The use of bikes are observed throughout the year. January, February, March are slow months, there have less demand for the bikes, demand starts increases around April, reaches peak around July- August and then starts dropping. 
+
+
+**Weekly Riders**
+
+Member riders - The use of bikes are high during the weekdays, Monday to Friday. On weekends, Saturday and Sunday demands are less. 
+
+Casual riders - The use of bikes are less during the weekdays, Monday to Thursday. On Friday, Saturday and Sunday demands are high.
+
+
+**Key findings**
+
+Membership have dropped in last couple of years. However, it bounce back in 2021 but it is still low by .7%. Demand for classic bikes and electric bikes are high and docked bikes are dropping among member riders. The most active months are April till July- August then the demand starts dropping. The most active days are weekdays- Monday to Friday.
+
+Casual members are growing significantly. Demand for classic bikes and electric bikes are high and docked bike are dropping among casual riders too. The most active months for the casual riders are same as the member riders. The most active days are Friday, Saturday and Sunday.
+
+
+**Recommendation**
+
+To convert casual riders to members, we can do the following:
+
+1) We will give priority to members over casual riders for their loyalties. 
+
+2) We will contact members and casual riders via email to conduct a survey, purpose of the survey will be to identify the reason for the drop in demand for docked bikes. 
+
+3) We will encourage the riders to participate in the survey by offering them  membership. 
+
+4) The new membership plan, will include weekends rides, seasonal rides as they are  popular treads among casual riders. 
+
+
